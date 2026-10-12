@@ -47,6 +47,10 @@ class WearRemoteViewModel(
         sendCommand("SLIDE_STOP")
     }
 
+    fun goToSlide(slide: Int) {
+        sendCommand("SLIDE_GOTO:$slide")
+    }
+
     fun sendCommand(action: String) {
         viewModelScope.launch {
             _lastErrorMessage.value = null

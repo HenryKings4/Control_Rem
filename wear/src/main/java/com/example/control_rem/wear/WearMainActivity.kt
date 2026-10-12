@@ -36,6 +36,7 @@ class WearMainActivity : ComponentActivity() {
                     onPrevSlide = viewModel::onPrevSlide,
                     onStartPresentation = viewModel::onStartPresentation,
                     onStopPresentation = viewModel::onStopPresentation,
+                    onGoToSlide = viewModel::goToSlide,
                     onRefreshStatus = viewModel::refreshConnectionStatus,
                     onUpdateSocketConfig = viewModel::updateDirectSocketConfig
                 )

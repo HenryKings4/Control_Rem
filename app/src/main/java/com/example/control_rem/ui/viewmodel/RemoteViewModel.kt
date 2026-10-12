@@ -43,4 +43,10 @@ class RemoteViewModel(
             repository.sendCommand(RemoteCommand.BlankScreen)
         }
     }
+
+    fun goToSlide(slide: Int) {
+        viewModelScope.launch {
+            repository.sendCommand(RemoteCommand.SlideGoTo(slide))
+        }
+    }
 }

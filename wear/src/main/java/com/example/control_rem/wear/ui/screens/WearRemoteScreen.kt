@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -63,12 +64,77 @@ fun WearRemoteScreen(
     onPrevSlide: () -> Unit,
     onStartPresentation: () -> Unit,
     onStopPresentation: () -> Unit,
+    onGoToSlide: (Int) -> Unit,
     onRefreshStatus: () -> Unit,
     onUpdateSocketConfig: (ip: String, port: Int, enabled: Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberScalingLazyListState()
     var showSettingsDialog by remember { mutableStateOf(false) }
+    var showGoToSlideDialog by remember { mutableStateOf(false) }
+    var targetSlide by remember { mutableStateOf(1) }
+
+    if (showGoToSlideDialog) {
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .background(DarkBackground),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text("Ir a Diapositiva", style = MaterialTheme.typography.caption1)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    androidx.wear.compose.material.Button(
+                        onClick = { if (targetSlide > 1) targetSlide-- },
+                        modifier = Modifier.size(36.dp),
+                        colors = androidx.wear.compose.material.ButtonDefaults.secondaryButtonColors()
+                    ) {
+                        Text("-", fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text(targetSlide.toString(), style = MaterialTheme.typography.title1)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    androidx.wear.compose.material.Button(
+                        onClick = { targetSlide++ },
+                        modifier = Modifier.size(36.dp),
+                        colors = androidx.wear.compose.material.ButtonDefaults.secondaryButtonColors()
+                    ) {
+                        Text("+", fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    androidx.wear.compose.material.Button(
+                        onClick = { showGoToSlideDialog = false },
+                        modifier = Modifier.size(40.dp),
+                        colors = androidx.wear.compose.material.ButtonDefaults.secondaryButtonColors()
+                    ) {
+                        Icon(imageVector = androidx.compose.material.icons.Icons.Rounded.Stop, contentDescription = "Cancelar")
+                    }
+                    androidx.wear.compose.material.Button(
+                        onClick = {
+                            onGoToSlide(targetSlide)
+                            showGoToSlideDialog = false
+                        },
+                        modifier = Modifier.size(40.dp),
+                        colors = androidx.wear.compose.material.ButtonDefaults.primaryButtonColors()
+                    ) {
+                        Icon(imageVector = androidx.compose.material.icons.Icons.Rounded.CheckCircle, contentDescription = "Confirmar")
+                    }
+                }
+            }
+        }
+        return
+    }
 
     Box(
         modifier = modifier
@@ -251,6 +317,37 @@ fun WearRemoteScreen(
                         backgroundColor = ActionRed,
                         contentColor = Color.White
                     )
+                )
+            }
+
+            // Item: Ir a Diapositiva
+            item {
+                Chip(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .padding(vertical = 2.dp),
+                    onClick = { showGoToSlideDialog = true },
+                    label = {
+                        Text(
+                            text = "Ir a Diap.",
+                            style = MaterialTheme.typography.button.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Rounded.PlayArrow,
+                            contentDescription = "Ir a Diap.",
+                            tint = Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    },
+                    colors = ChipDefaults.secondaryChipColors()
                 )
             }
 
@@ -448,6 +545,7 @@ fun WearRemoteScreenRoundPreview() {
             onPrevSlide = {},
             onStartPresentation = {},
             onStopPresentation = {},
+            onGoToSlide = {},
             onRefreshStatus = {},
             onUpdateSocketConfig = { _, _, _ -> }
         )
@@ -478,6 +576,7 @@ fun WearRemoteScreenSquarePreview() {
             onPrevSlide = {},
             onStartPresentation = {},
             onStopPresentation = {},
+            onGoToSlide = {},
             onRefreshStatus = {},
             onUpdateSocketConfig = { _, _, _ -> }
         )

@@ -29,6 +29,12 @@ class CommandSerializerTest {
         val stopParsed = CommandSerializer.parseTextProtocol("SLIDE_STOP")
         assertEquals(RemoteCommand.SlideStop, stopParsed)
 
+        val gotoText = CommandSerializer.toTextProtocol(RemoteCommand.SlideGoTo(42), includeNewline = false)
+        assertEquals("SLIDE_GOTO:42", gotoText)
+
+        val gotoParsed = CommandSerializer.parseTextProtocol("SLIDE_GOTO:42")
+        assertEquals(RemoteCommand.SlideGoTo(42), gotoParsed)
+
         val blankParsed = CommandSerializer.parseTextProtocol("BLANK_SCREEN")
         assertEquals(RemoteCommand.BlankScreen, blankParsed)
     }

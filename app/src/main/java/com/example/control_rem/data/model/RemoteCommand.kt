@@ -27,6 +27,10 @@ sealed class RemoteCommand {
     data object SlideStop : RemoteCommand()
 
     @Serializable
+    @SerialName("SLIDE_GOTO")
+    data class SlideGoTo(val slideNumber: Int) : RemoteCommand()
+
+    @Serializable
     @SerialName("BLANK_SCREEN")
     data object BlankScreen : RemoteCommand()
 

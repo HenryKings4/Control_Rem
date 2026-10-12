@@ -29,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +57,7 @@ fun RemoteScreen(
         onStartPresentation = viewModel::sendStartPresentation,
         onStopPresentation = viewModel::sendStopPresentation,
         onBlankScreen = viewModel::sendBlankScreen,
+        onGoToSlide = viewModel::goToSlide,
         onNavigateToConnection = onNavigateToConnection,
         modifier = modifier
     )
@@ -69,9 +71,47 @@ fun RemoteContent(
     onStartPresentation: () -> Unit,
     onStopPresentation: () -> Unit,
     onBlankScreen: () -> Unit,
+    onGoToSlide: (Int) -> Unit,
     modifier: Modifier = Modifier,
     onNavigateToConnection: () -> Unit = {}
 ) {
+    var showGoToSlideDialog by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+
+    if (showGoToSlideDialog) {
+        var slideNumberText by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showGoToSlideDialog = false },
+            title = { Text("Ir a Diapositiva") },
+            text = {
+                androidx.compose.material3.OutlinedTextField(
+                    value = slideNumberText,
+                    onValueChange = { slideNumberText = it },
+                    label = { Text("Número de diapositiva") },
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+                    ),
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = {
+                        slideNumberText.toIntOrNull()?.let { onGoToSlide(it) }
+                        showGoToSlideDialog = false
+                    }
+                ) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { showGoToSlideDialog = false }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -243,6 +283,20 @@ fun RemoteContent(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Pantalla en Blanco (B)")
                 }
+
+                // Go to Slide
+                FilledTonalButton(
+                    onClick = { showGoToSlideDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Rounded.PlayArrow,
+                        contentDescription = "Ir a Diapositiva"
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Ir a Diapositiva")
+                }
             }
         }
     }
@@ -258,7 +312,8 @@ fun RemoteScreenPreview() {
             onPrevSlide = {},
             onStartPresentation = {},
             onStopPresentation = {},
-            onBlankScreen = {}
+            onBlankScreen = {},
+            onGoToSlide = {}
         )
     }
 }

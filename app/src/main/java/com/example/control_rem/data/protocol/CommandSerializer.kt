@@ -46,6 +46,7 @@ object CommandSerializer {
             is RemoteCommand.SlidePrev -> "SLIDE_PREV"
             is RemoteCommand.SlideStart -> "SLIDE_START"
             is RemoteCommand.SlideStop -> "SLIDE_STOP"
+            is RemoteCommand.SlideGoTo -> "SLIDE_GOTO:${command.slideNumber}"
             is RemoteCommand.BlankScreen -> "BLANK_SCREEN"
             is RemoteCommand.MouseMove -> "MOUSE_MOVE:${command.dx},${command.dy}"
             is RemoteCommand.MouseLeftClick -> "MOUSE_LEFT_CLICK"
@@ -93,6 +94,13 @@ object CommandSerializer {
                 val valueStr = trimmed.substringAfter("MOUSE_SCROLL").trim(':', ' ', '=')
                 valueStr.toFloatOrNull()?.let { dy ->
                     RemoteCommand.MouseScroll(dy)
+                }
+            }
+
+            trimmed.startsWith("SLIDE_GOTO", ignoreCase = true) -> {
+                val valueStr = trimmed.substringAfter("SLIDE_GOTO").trim(':', ' ', '=')
+                valueStr.toIntOrNull()?.let { slideNumber ->
+                    RemoteCommand.SlideGoTo(slideNumber)
                 }
             }
 
