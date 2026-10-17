@@ -3,6 +3,7 @@ package com.example.control_rem.wearable
 import com.example.control_rem.data.model.RemoteCommand
 import com.example.control_rem.data.protocol.CommandSerializer
 import com.example.control_rem.data.repository.RemoteControlRepository
+import com.example.control_rem.data.repository.RepositoryProvider
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,12 +25,14 @@ class WearableMessageHandlerImpl : WearableMessageHandler {
 
         _receivedWearableCommands.emit(command)
 
-        val repository = boundRepository
-        if (repository != null) {
-            repository.sendCommand(command)
-        }
+        val repository = boundRepository ?: RepositoryProvider.repository
+        val sendResult = repository.sendCommand(command)
 
-        return Result.success(command)
+        return if (sendResult.isSuccess) {
+            Result.success(command)
+        } else {
+            Result.failure(sendResult.exceptionOrNull() ?: Exception("Failed to forward command to PC"))
+        }
     }
 
     private fun parsePathAndData(path: String, data: ByteArray?): RemoteCommand? {

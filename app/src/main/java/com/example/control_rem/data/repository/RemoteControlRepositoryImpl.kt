@@ -40,6 +40,16 @@ class RemoteControlRepositoryImpl(
     }
 
     override suspend fun sendCommand(command: RemoteCommand): Result<Unit> {
+        val currentState = connectionState.value
+        if (currentState is ConnectionState.Disconnected || currentState is ConnectionState.Error) {
+            val config = _currentConfig.value
+            if (config.ipAddress.isNotBlank() && config.port in 1..65535) {
+                val connectResult = connect(config.ipAddress, config.port, config.protocolType)
+                if (connectResult.isFailure) {
+                    return connectResult
+                }
+            }
+        }
         val result = socketClient.sendCommand(command)
         if (result.isSuccess) {
             recordCommand(command)
@@ -48,6 +58,16 @@ class RemoteControlRepositoryImpl(
     }
 
     override suspend fun sendRawPayload(payload: String): Result<Unit> {
+        val currentState = connectionState.value
+        if (currentState is ConnectionState.Disconnected || currentState is ConnectionState.Error) {
+            val config = _currentConfig.value
+            if (config.ipAddress.isNotBlank() && config.port in 1..65535) {
+                val connectResult = connect(config.ipAddress, config.port, config.protocolType)
+                if (connectResult.isFailure) {
+                    return connectResult
+                }
+            }
+        }
         return socketClient.sendRawData(payload)
     }
 

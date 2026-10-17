@@ -21,6 +21,13 @@ class WearRemoteViewModel(
     private val _lastErrorMessage = MutableStateFlow<String?>(null)
     val lastErrorMessage: StateFlow<String?> = _lastErrorMessage.asStateFlow()
 
+    private val _isAmbient = MutableStateFlow(false)
+    val isAmbient: StateFlow<Boolean> = _isAmbient.asStateFlow()
+
+    fun setIsAmbient(ambient: Boolean) {
+        _isAmbient.value = ambient
+    }
+
     init {
         refreshConnectionStatus()
     }
