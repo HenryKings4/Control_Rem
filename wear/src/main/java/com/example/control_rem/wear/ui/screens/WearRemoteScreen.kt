@@ -100,17 +100,81 @@ fun WearRemoteScreen(
         contentAlignment = Alignment.Center
     ) {
         if (isAmbient) {
-            // UI Minimalista y de bajo consumo en modo ambiente
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+            // UI minimalista de alto contraste y bajo consumo OLED/LCD para modo ambiente
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp, vertical = 20.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Control Remoto",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.White.copy(alpha = 0.7f),
-                    fontWeight = FontWeight.Medium
-                )
+                // Botón Anterior en modo ambiente
+                Surface(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onPrevSlide()
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Black,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.6f)),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(90.dp)
+                        .padding(end = 4.dp)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                            contentDescription = "Anterior",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "ANT",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                // Botón Siguiente en modo ambiente
+                Surface(
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onNextSlide()
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color.Black,
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.White),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(90.dp)
+                        .padding(start = 4.dp)
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Rounded.ArrowForward,
+                            contentDescription = "Siguiente",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "SIG",
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
             }
         } else {
             LazyColumn(
@@ -435,10 +499,10 @@ fun WearRemoteScreen(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
-                }
             }
-        } // Fin del bloque 'else' (fuera de modo ambiente)
-    } // Fin del Box principal
+        } // Fin de LazyColumn
+    } // Fin del bloque 'else' (fuera de modo ambiente)
+} // Fin del Box principal
 
     // Dialog: Go to Slide Number
     if (showGoToSlideDialog) {
@@ -464,7 +528,8 @@ fun WearRemoteScreen(
             }
         )
     }
-}
+} // Fin del Box principal
+} // Fin de WearRemoteScreen
 
 @Composable
 private fun GoToSlideDialog(

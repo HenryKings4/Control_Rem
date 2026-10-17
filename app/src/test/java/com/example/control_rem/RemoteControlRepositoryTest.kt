@@ -66,19 +66,24 @@ class RemoteControlRepositoryTest {
         val fakeSocket = FakeSocketClient()
         val repo = RemoteControlRepositoryImpl(socketClient = fakeSocket)
 
-        val cmd1 = RemoteCommand.SlideNext
-        val cmd2 = RemoteCommand.MouseMove(10f, 20f)
+        val cmdSlide = RemoteCommand.SlideNext
+        val cmdClick = RemoteCommand.MouseLeftClick
+        val cmdMove = RemoteCommand.MouseMove(10f, 20f)
 
-        repo.sendCommand(cmd1)
-        repo.sendCommand(cmd2)
+        repo.sendCommand(cmdSlide)
+        repo.sendCommand(cmdClick)
+        repo.sendCommand(cmdMove)
 
-        assertEquals(2, fakeSocket.sentCommands.size)
-        assertEquals(cmd1, fakeSocket.sentCommands[0])
-        assertEquals(cmd2, fakeSocket.sentCommands[1])
+        // All 3 commands are forwarded to the socket
+        assertEquals(3, fakeSocket.sentCommands.size)
+        assertEquals(cmdSlide, fakeSocket.sentCommands[0])
+        assertEquals(cmdClick, fakeSocket.sentCommands[1])
+        assertEquals(cmdMove, fakeSocket.sentCommands[2])
 
+        // High-frequency MouseMove is filtered from command history to prevent UI lag/recomposition
         val history = repo.commandHistory.value
         assertEquals(2, history.size)
-        assertEquals(cmd2, history[0])
-        assertEquals(cmd1, history[1])
+        assertEquals(cmdClick, history[0])
+        assertEquals(cmdSlide, history[1])
     }
 }

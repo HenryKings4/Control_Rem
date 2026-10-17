@@ -26,7 +26,7 @@ class WearRemoteRepository(
                     isConnected = true,
                     mode = WearConnectionMode.DATA_LAYER,
                     connectedNodesCount = nodeCount,
-                    statusText = if (nodeCount == 1) "Connected to Phone" else "Connected to $nodeCount Phones"
+                    statusText = if (nodeCount == 1) "Conectado a Celular" else "Conectado ($nodeCount Celulares)"
                 )
             } else if (current.isDirectWifiEnabled && current.directIpAddress.isNotBlank()) {
                 current.copy(
@@ -40,7 +40,7 @@ class WearRemoteRepository(
                     isConnected = false,
                     mode = WearConnectionMode.DISCONNECTED,
                     connectedNodesCount = 0,
-                    statusText = "Disconnected"
+                    statusText = "Desconectado del Celular"
                 )
             }
         }

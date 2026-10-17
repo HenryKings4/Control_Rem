@@ -27,3 +27,4 @@ captures/
 # Agent workspace / session artifacts
 .agent/
 .artifacts/
+*.log

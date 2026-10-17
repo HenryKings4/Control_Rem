@@ -4,15 +4,24 @@ import com.example.control_rem.data.model.ConnectionState
 import com.example.control_rem.data.model.NetworkConfig
 import com.example.control_rem.data.model.ProtocolType
 import com.example.control_rem.data.model.RemoteCommand
+import com.example.control_rem.data.network.NetworkLockManager
 import com.example.control_rem.data.network.NetworkSocketManager
 import com.example.control_rem.data.network.SocketClient
+import com.example.control_rem.data.preferences.NetworkPreferencesDataSource
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 class RemoteControlRepositoryImpl(
     private val socketClient: SocketClient = NetworkSocketManager(),
-    initialConfig: NetworkConfig = NetworkConfig()
+    initialConfig: NetworkConfig = NetworkConfig(),
+    private val preferencesDataSource: NetworkPreferencesDataSource? = null,
+    private val repositoryScope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 ) : RemoteControlRepository {
 
     override val connectionState: StateFlow<ConnectionState> = socketClient.connectionState
@@ -25,6 +34,28 @@ class RemoteControlRepositoryImpl(
 
     private val maxHistorySize = 50
 
+    init {
+        preferencesDataSource?.let { prefs ->
+            repositoryScope.launch {
+                val savedConfig = prefs.networkConfigFlow.firstOrNull()
+                if (savedConfig != null) {
+                    _currentConfig.value = savedConfig
+                }
+            }
+        }
+
+        // Manage Wi-Fi / Wake locks according to connection status
+        repositoryScope.launch {
+            connectionState.collect { state ->
+                if (state is ConnectionState.Connected) {
+                    NetworkLockManager.acquireLocks()
+                } else if (state is ConnectionState.Disconnected || state is ConnectionState.Error) {
+                    NetworkLockManager.releaseLocks()
+                }
+            }
+        }
+    }
+
     override suspend fun connect(ipAddress: String, port: Int, protocolType: ProtocolType): Result<Unit> {
         val newConfig = _currentConfig.value.copy(
             ipAddress = ipAddress,
@@ -32,11 +63,18 @@ class RemoteControlRepositoryImpl(
             protocolType = protocolType
         )
         _currentConfig.value = newConfig
-        return socketClient.connect(ipAddress, port, protocolType)
+        preferencesDataSource?.saveConfig(newConfig)
+
+        val result = socketClient.connect(ipAddress, port, protocolType)
+        if (result.isSuccess) {
+            preferencesDataSource?.saveConfig(newConfig)
+        }
+        return result
     }
 
     override suspend fun disconnect() {
         socketClient.disconnect()
+        NetworkLockManager.releaseLocks()
     }
 
     override suspend fun sendCommand(command: RemoteCommand): Result<Unit> {
@@ -73,6 +111,7 @@ class RemoteControlRepositoryImpl(
 
     override suspend fun updateConfig(config: NetworkConfig) {
         _currentConfig.value = config
+        preferencesDataSource?.saveConfig(config)
     }
 
     override fun clearCommandHistory() {
@@ -80,6 +119,11 @@ class RemoteControlRepositoryImpl(
     }
 
     private fun recordCommand(command: RemoteCommand) {
+        // Exclude continuous high-frequency mouse pointer and scroll movements
+        // to prevent UI recomposition lag, GC thrashing, and command history clutter
+        if (command is RemoteCommand.MouseMove || command is RemoteCommand.MouseScroll) {
+            return
+        }
         val currentList = _commandHistory.value.toMutableList()
         currentList.add(0, command)
         if (currentList.size > maxHistorySize) {

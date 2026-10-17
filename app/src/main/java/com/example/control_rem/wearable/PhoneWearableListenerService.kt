@@ -1,10 +1,12 @@
 package com.example.control_rem.wearable
 
+import com.example.control_rem.data.repository.RepositoryProvider
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 /**
@@ -16,6 +18,11 @@ class PhoneWearableListenerService : WearableListenerService() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
+    override fun onCreate() {
+        super.onCreate()
+        RepositoryProvider.initialize(applicationContext)
+    }
+
     override fun onMessageReceived(messageEvent: MessageEvent) {
         super.onMessageReceived(messageEvent)
         val path = messageEvent.path
@@ -25,5 +32,10 @@ class PhoneWearableListenerService : WearableListenerService() {
         serviceScope.launch {
             handler.handleWearableMessage(path, data)
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
     }
 }

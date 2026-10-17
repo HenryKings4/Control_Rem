@@ -13,6 +13,6 @@ data class WearConnectionStatus(
     val connectedNodesCount: Int = 0,
     val directIpAddress: String = "192.168.1.100",
     val directPort: Int = 8080,
-    val isDirectWifiEnabled: Boolean = true,
+    val isDirectWifiEnabled: Boolean = false,
     val statusText: String = "Disconnected"
 )

@@ -123,38 +123,80 @@ fun TouchpadContent(
                         shape = RoundedCornerShape(18.dp)
                     )
                     .pointerInput(Unit) {
-                        coroutineScope {
-                            launch {
-                                detectTapGestures(
-                                    onTap = { onLeftClick() },
-                                    onDoubleTap = { onDoubleClick() },
-                                    onLongPress = { onRightClick() }
-                                )
-                            }
-                            launch {
-                                awaitPointerEventScope {
+                        awaitPointerEventScope {
+                            var lastTapTime = 0L
+                            while (true) {
+                                val downEvent = awaitPointerEvent()
+                                val downPointers = downEvent.changes.filter { it.pressed }
+                                if (downPointers.isEmpty()) continue
+
+                                if (downPointers.size == 1) {
+                                    val downTime = System.currentTimeMillis()
+                                    var isDrag = false
+                                    var isLongPressTriggered = false
+                                    var totalMoved = 0f
+
                                     while (true) {
                                         val event = awaitPointerEvent()
-                                        val pointers = event.changes.filter { it.pressed }
-                                        if (pointers.size == 1) {
-                                            val change = pointers[0]
-                                            if (change.position != change.previousPosition) {
-                                                val dx = change.position.x - change.previousPosition.x
-                                                val dy = change.position.y - change.previousPosition.y
-                                                onMouseMove(dx, dy)
-                                                change.consume()
-                                            }
-                                        } else if (pointers.size == 2) {
-                                            val p1 = pointers[0]
-                                            val p2 = pointers[1]
-                                            val dy1 = p1.position.y - p1.previousPosition.y
-                                            val dy2 = p2.position.y - p2.previousPosition.y
-                                            val avgDy = (dy1 + dy2) / 2f
-                                            if (abs(avgDy) > 0.5f) {
-                                                onScroll(avgDy)
+                                        val activePointers = event.changes.filter { it.pressed }
+
+                                        if (activePointers.size >= 2) {
+                                            // Multi-finger scroll
+                                            val p1 = activePointers[0]
+                                            val p2 = activePointers[1]
+                                            val dy = ((p1.position.y - p1.previousPosition.y) + (p2.position.y - p2.previousPosition.y)) / 2f
+                                            if (abs(dy) > 0.5f) {
+                                                onScroll(dy)
                                                 p1.consume()
                                                 p2.consume()
                                             }
+                                        } else if (activePointers.size == 1) {
+                                            val current = activePointers[0]
+                                            val dx = current.position.x - current.previousPosition.x
+                                            val dy = current.position.y - current.previousPosition.y
+                                            totalMoved += kotlin.math.hypot(dx.toDouble(), dy.toDouble()).toFloat()
+
+                                            if (totalMoved > 10f) {
+                                                isDrag = true
+                                                if (dx != 0f || dy != 0f) {
+                                                    onMouseMove(dx, dy)
+                                                    current.consume()
+                                                }
+                                            } else if (!isLongPressTriggered && (System.currentTimeMillis() - downTime) > 500L) {
+                                                isLongPressTriggered = true
+                                                onRightClick()
+                                            }
+                                        } else {
+                                            // Finger lifted (all released)
+                                            val duration = System.currentTimeMillis() - downTime
+                                            if (!isDrag && !isLongPressTriggered && totalMoved <= 10f && duration < 400L) {
+                                                val now = System.currentTimeMillis()
+                                                if (now - lastTapTime < 280L) {
+                                                    onDoubleClick()
+                                                    lastTapTime = 0L
+                                                } else {
+                                                    onLeftClick()
+                                                    lastTapTime = now
+                                                }
+                                            }
+                                            break
+                                        }
+                                    }
+                                } else if (downPointers.size >= 2) {
+                                    while (true) {
+                                        val event = awaitPointerEvent()
+                                        val activePointers = event.changes.filter { it.pressed }
+                                        if (activePointers.size >= 2) {
+                                            val p1 = activePointers[0]
+                                            val p2 = activePointers[1]
+                                            val dy = ((p1.position.y - p1.previousPosition.y) + (p2.position.y - p2.previousPosition.y)) / 2f
+                                            if (abs(dy) > 0.5f) {
+                                                onScroll(dy)
+                                                p1.consume()
+                                                p2.consume()
+                                            }
+                                        } else {
+                                            break
                                         }
                                     }
                                 }

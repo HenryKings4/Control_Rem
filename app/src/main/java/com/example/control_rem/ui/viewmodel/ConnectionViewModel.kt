@@ -52,8 +52,8 @@ class ConnectionViewModel(
         val ip = _ipInput.value.trim()
         val portStr = _portInput.value.trim()
 
-        if (ip.isBlank()) {
-            _errorMessage.value = "Ingresa una dirección IP válida"
+        if (ip.isBlank() || !isValidIp(ip)) {
+            _errorMessage.value = "Ingresa una dirección IP válida (ej. 192.168.1.100)"
             return
         }
 
@@ -80,5 +80,16 @@ class ConnectionViewModel(
 
     fun clearHistory() {
         repository.clearCommandHistory()
+    }
+
+    private fun isValidIp(ip: String): Boolean {
+        if (ip.equals("localhost", ignoreCase = true)) return true
+        return IPV4_REGEX.matches(ip)
+    }
+
+    companion object {
+        private val IPV4_REGEX = Regex(
+            "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+        )
     }
 }
